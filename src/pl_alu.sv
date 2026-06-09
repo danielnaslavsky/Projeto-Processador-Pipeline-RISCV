@@ -28,9 +28,9 @@ module pl_alu (
             4'd04:   ALUResult = SrcA | SrcB;
             4'd05:   ALUResult = SrcA & SrcB;
             4'd06:   ALUResult = 32'($signed(SrcA) < $signed(SrcB));
-            4'd07:   ALUResult = SrcA << SrcB; //SLL IMPLEMENTADO
-            4'd08:   ALUResult = SrcB >> SrcB; // SRL IMPLEMENTADO
-            4'd09:   ALUResult = $signed(SrcA) >> SrcB; //SRA IMPLEMENTADO
+            4'd07:   ALUResult = SrcA << SrcB[4:0]; //SLL IMPLEMENTADO
+            4'd08:   ALUResult = SrcB >> SrcB[4:0]; // SRL IMPLEMENTADO
+            4'd09:   ALUResult = $signed(SrcA) >> SrcB[4:0]; //SRA IMPLEMENTADO
             4'd10:   ALUResult = 32'(SrcA < SrcB); //SLTU IMPLEMENTADO
             default: ALUResult = 32'b0;
         endcase
