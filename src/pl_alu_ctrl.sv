@@ -33,8 +33,39 @@ module pl_alu_ctrl (
                     3'h0: Operation = Funct7[5] ? 4'd02 : 4'd01; // SUB ou ADD
                     3'h6: Operation = 4'd04;  // OR
                     3'h7: Operation = 4'd05;  // AND
-                    3'h2: Operation = 4'd11;  // SLT
+                    3'h2: Operation = 4'd06;  // SLT
+                    3'h4: Operation = 4'd03;  //XOR IMPLEMENTADO
+                    3'h1: Operation = 4'd07;  //SLL IMPLEMENTADO
+                    3'h5 : begin 
+                        case (Funct7) 
+                            7'h00: Operation = 4'd08; //SRL IMPLEMENTADO
+                            7'h20: Operation = 4'd09; //SRA IMPLEMENTADO
+									 default : Operation = 4'd01;
+                        endcase
+                    end
+                    3'h3: Operation = 4'd10; //SLTU IMPLEMENTADO
+                    
+                    
+
                     default: Operation = 4'd01;
+                endcase
+            end
+
+            2'b11: begin //TIPO IMEADIATO IMPLEMENTADO
+                case (Funct3)
+                    3'h0: Operation = 4'd01; //ADDI IMPLEMENTADO
+                    3'h6: Operation = 4'd04;  // ORI IMPLEMENTADO
+                    3'h7: Operation = 4'd05;  // ANDI IMPLEMENTADO
+                    3'h2: Operation = 4'd06;  // SLTI IMPLEMENTADO
+                    3'h1: Operation = 4'd03;  //SLLI IMPLEMENTADO
+                    3'h5 : begin 
+                        case (Funct7) 
+                            7'h00: Operation = 4'd08; //SRLI IMPLEMENTADO
+                            7'h20: Operation = 4'd09; //SRAI IMPLEMENTADO
+									 default: Operation = 4'd01;
+                        endcase
+                    end
+						default: Operation = 4'd01;
                 endcase
             end
 
