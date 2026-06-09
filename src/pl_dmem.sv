@@ -18,7 +18,8 @@ module pl_dmem (
     input  logic        MemWrite,
     input  logic [7:0]  addr,
     input  logic [31:0] WriteData,
-    output logic [31:0] ReadData
+    output logic [31:0] ReadData,
+    input logic [4:0] LoadControl
 );
 
     (* ram_init_file = "data.mif" *) logic [31:0] ram [0:255];
@@ -36,4 +37,15 @@ module pl_dmem (
 
     assign ReadData = ram[addr];
 
+    always_comb begin
+        case(LoadControl)
+        00001: ReadData = {{24{ram[addr][7]}},ram[addr][7:0]}; // LB
+        00010: ReadData = {{16{ram[addr][15]}},ram[addr][15:0]};  // LH
+        00100: ReadData = ram[addr];                            // LW
+        01000: ReadData = {{24'b0},ram[addr][7:0]};             // LBU
+        10000:  ReadData = {{16'b0},ram[addr][15:0]};            // LHU
+        default: ReadData = ram[addr];
+    endcase
+    end
+        
 endmodule

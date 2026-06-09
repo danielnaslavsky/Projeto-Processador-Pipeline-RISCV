@@ -19,12 +19,22 @@ module pl_alu_ctrl (
     input  logic [1:0] ALUOp,
     input  logic [6:0] Funct7,
     input  logic [2:0] Funct3,
-    output logic [3:0] Operation
+    output logic [3:0] Operation,
+    input logic [4:0] LoadControl
 );
 
     always_comb begin
         case (ALUOp)
             2'b00: Operation = 4'd01;   // Load / Store -> ADD
+                case(Funct3)
+                    3'h0: LoadControl = 00001;
+                    3'h1: LoadControl = 00010;
+                    3'h2: LoadControl = 00100;
+                    3'h3: LoadControl = 01000;
+                    3'h4: LoadControl = 10000;
+                    default: LoadControl = 00100; // Aleatório 
+                endcase
+
 
             2'b01: Operation = 4'd02;   // Branch BEQ  -> SUB
 
