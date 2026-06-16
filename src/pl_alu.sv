@@ -25,8 +25,8 @@ module pl_alu (
             4'd01:   ALUResult = $signed(SrcA) + $signed(SrcB);
             4'd02:   ALUResult = $signed(SrcA) - $signed(SrcB);
             4'd03:   ALUResult = SrcA ^ SrcB; //XOR IMPLEMENTADO
-            4'd04:   ALUResult = SrcA | SrcB;
-            4'd05:   ALUResult = SrcA & SrcB;
+            4'd04:   ALUResult = SrcA | SrcB; // ORI
+            4'd05:   ALUResult = SrcA & SrcB; // ANDI
             4'd06:   ALUResult = 32'($signed(SrcA) < $signed(SrcB));
             4'd07:   ALUResult = SrcA << SrcB[4:0]; //SLL IMPLEMENTADO
             4'd08:   ALUResult = SrcA >> SrcB[4:0]; // SRL IMPLEMENTADO

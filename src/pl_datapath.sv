@@ -98,6 +98,7 @@ module pl_datapath (
     // MEM
     logic        mmio_sel;
     logic [31:0] dmem_rd, mmio_rd, mem_read_data;
+    logic [4:0] LoadControl;
 
     // =========================================================================
     // IF -- Busca de instrucao
@@ -238,7 +239,7 @@ module pl_datapath (
     assign ALUOp_EX  = id_ex.alu_op;
 
     // =========================================================================
-    // EX -- Forwarding, ALU, resolucao de branch
+    // EX -- Forwarding, ALU, resolucao debranch
     // =========================================================================
     pl_forward forward (
         .id_ex_rs1        (id_ex.rs1),
@@ -319,7 +320,8 @@ module pl_datapath (
         .MemWrite  (ex_mem.mem_write & ~mmio_sel),
         .addr      (ex_mem.alu_result[9:2]),
         .WriteData (ex_mem.write_data),
-        .ReadData  (dmem_rd)
+        .ReadData  (dmem_rd),
+        .LoadControl (LoadControl)
     );
 
     pl_mmio mmio (

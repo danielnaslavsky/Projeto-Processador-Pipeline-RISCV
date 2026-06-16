@@ -52,6 +52,7 @@ module pl_cpu (
     logic [6:0] funct7_ex;
     logic [1:0] aluop_ex;
     logic [3:0] alu_cc;
+    logic [4:0] LoadControl;
 
     // -------------------------------------------------------------------------
     // Unidade de controle principal (estagio ID)
@@ -74,7 +75,8 @@ module pl_cpu (
         .ALUOp     (aluop_ex),
         .Funct7    (funct7_ex),
         .Funct3    (funct3_ex),
-        .Operation (alu_cc)
+        .Operation (alu_cc),
+        .LoadControl (LoadControl)
     );
 
     // -------------------------------------------------------------------------
@@ -107,7 +109,8 @@ module pl_cpu (
         .wb_reg_data  (wb_reg_data),
         .mem_wr_en    (mem_wr_en),
         .mem_wr_addr  (mem_wr_addr),
-        .mem_wr_data  (mem_wr_data)
+        .mem_wr_data  (mem_wr_data),
+        .LoadControl (LoadControl)
     );
 
 endmodule
