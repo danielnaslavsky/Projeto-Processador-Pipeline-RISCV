@@ -37,7 +37,15 @@ module pl_alu_ctrl (
 
 
             2'b01: Operation = 4'd02;   // Branch BEQ  -> SUB
-
+                case (Funct3)
+                    3'h0: Operation = 4'd02;
+                    3'h1: Operation = 4'd02;
+                    3'h2: Operation = 4'd10;
+                    3'h3: Operation = 4'd10;
+                    3'h4: Operation = 4'd11;
+                    3'h5: Operation = 4'd11;
+                    default: Operation = 4'd02;
+                endcase
             2'b10: begin                // R-type: decodificar Funct
                 case (Funct3)
                     3'h0: Operation = Funct7[5] ? 4'd02 : 4'd01; // SUB ou ADD
