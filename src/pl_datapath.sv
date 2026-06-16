@@ -321,7 +321,8 @@ module pl_datapath (
         .addr      (ex_mem.alu_result[9:2]),
         .WriteData (ex_mem.write_data),
         .ReadData  (dmem_rd),
-        .LoadControl (LoadControl)
+        .LoadControl (LoadControl),
+        .StoreControl (Funct3_EX) // para controlar o tipo de store
     );
 
     pl_mmio mmio (
