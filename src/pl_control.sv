@@ -42,7 +42,7 @@ module pl_control (
     localparam STORE  = 7'b0100011;
     localparam BRANCH = 7'b1100011;
     localparam I_TYPE = 7'b0010011;
-
+    
     always_comb begin
         ALUSrc   = 1'b0;
         MemtoReg = 1'b0;

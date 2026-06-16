@@ -19,6 +19,7 @@ module pl_sign_ext (
     localparam LOAD   = 7'b0000011;
     localparam STORE  = 7'b0100011;
     localparam BRANCH = 7'b1100011;
+    localparam I_TYPE =  7'b0010011;
 
     always_comb begin
         case (Instr[6:0])
@@ -28,6 +29,8 @@ module pl_sign_ext (
 
             BRANCH: ImmExt = {{19{Instr[31]}}, Instr[31], Instr[7],
                                Instr[30:25], Instr[11:8], 1'b0};
+
+            I_TYPE: ImmExt = {{20{Instr[31]}}, Instr[31:20]}; //Como o Imediato possui 32 bits, e criamos um novo formato de instrução(I_TYPE), precisamos extender o sinal.
 
             default: ImmExt = 32'b0;
         endcase
