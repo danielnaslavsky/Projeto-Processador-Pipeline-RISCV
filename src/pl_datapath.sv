@@ -35,6 +35,7 @@ module pl_datapath (
     input  logic        MemRead,
     input  logic        MemWrite,
     input  logic        Branch,
+    input  logic [1:0]  JalJalr,          //sinal do jaljalr adicionado
     input  logic [1:0]  ALUOp,
 
     // Codigo de operacao da ALU (pl_alu_ctrl, usa campos do estagio EX)
@@ -105,6 +106,10 @@ module pl_datapath (
     // =========================================================================
     logic [31:0] instr_if;
 
+    // JALJALR
+    logic [31:0] jal_target;
+    logic [31:0] jalr_target;
+
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n)      pc_reg <= 32'b0;
         else if (pc_src) pc_reg <= branch_target;   // branch tem prioridade
@@ -151,12 +156,11 @@ module pl_datapath (
         .stall          (stall)
     );
 
-    // Dado de write-back (mux WB): usado tambem pelo forwarding MEM/WB->EX
     assign wb_data = mem_wb.mem_to_reg ? mem_wb.read_data : mem_wb.alu_result;
 
     pl_regfile regfile (
         .clk       (clk),
-        .RegWrite  (mem_wb.reg_write),
+        .RegWrite  (mem_wb.reg_write),rd
         .rs1       (if_id.instr[19:15]),
         .rs2       (if_id.instr[24:20]),
         .rd        (mem_wb.rd),
@@ -187,7 +191,6 @@ module pl_datapath (
             id_ex.mem_write  <= 1'b0;
             id_ex.alu_op     <= 2'b00;
             id_ex.branch     <= 1'b0;
-            id_ex.opcode     <= 7'b0;
             id_ex.pc         <= 32'b0;
             id_ex.rd1        <= 32'b0;
             id_ex.rd2        <= 32'b0;
@@ -205,7 +208,6 @@ module pl_datapath (
             id_ex.mem_write  <= 1'b0;
             id_ex.alu_op     <= 2'b00;
             id_ex.branch     <= 1'b0;
-            id_ex.opcode     <= 7'b0;
             id_ex.pc         <= 32'b0;
             id_ex.rd1        <= 32'b0;
             id_ex.rd2        <= 32'b0;
@@ -223,7 +225,6 @@ module pl_datapath (
             id_ex.mem_write  <= MemWrite;
             id_ex.alu_op     <= ALUOp;
             id_ex.branch     <= Branch;
-            id_ex.opcode     <= if_id.instr[6:0];
             id_ex.pc         <= if_id.pc;
             id_ex.rd1        <= rd1;
             id_ex.rd2        <= rd2;
@@ -274,33 +275,27 @@ module pl_datapath (
     end
 
     // Mux ALUSrc: imediato ou registrador
-    logic is_lui;
-    logic is_auipc;
-
-    logic [31:0] alu_srca;
-
-    assign is_lui = (id_ex.opcode == 7'b0110111);
-    assign is_auipc = (id_ex.opcode == 7'b0010111);
-
-    assign alu_srca =
-            is_lui   ? 32'b0 :
-            is_auipc ? id_ex.pc :
-               fwd_srca;
-
-    assign alu_srcb =
-        id_ex.alu_src ? id_ex.imm_ext : fwd_srcb;
+    assign alu_srcb = id_ex.alu_src ? id_ex.imm_ext : fwd_srcb;
 
     pl_alu alu (
-        .SrcA      (alu_srca),
+        .SrcA      (fwd_srca),
         .SrcB      (alu_srcb),
         .Operation (ALU_CC),
         .ALUResult (alu_result),
         .Zero      (zero)
     );
 
-    // Branch resolvido no estagio EX (flush 2 instrucoes se taken)
-    assign branch_target = id_ex.pc + id_ex.imm_ext;
-    assign pc_src        = id_ex.branch && zero;
+    always_comb begin
+        if (id_ex.jaljalr == 2'b01 || id_ex.branch) begin                              //
+            branch_target = id_ex.pc + id_ex.imm_ext;
+    end else if (id_ex.jaljalr == 2'b10) begin
+            branch_target =  fwd_srca + id_ex.imm_ext;
+    end  
+    end
+    
+    // Branch resolvido no estagio EX (flush 2 instrucoes se taken) ou jaljalr                 
+
+    assign pc_src        = (id_ex.branch && zero) || (jaljalr == 2'b01 || jaljalr == 2'b10);
 
     // =========================================================================
     // Registrador EX/MEM
