@@ -27,6 +27,8 @@ package pl_pipe_pkg;
         logic        mem_write;
         logic [1:0]  alu_op;
         logic        branch;
+        logic [6:0]  opcode;
+
         // dados
         logic [31:0] pc;
         logic [31:0] rd1;       // saida 1 do banco de registradores
