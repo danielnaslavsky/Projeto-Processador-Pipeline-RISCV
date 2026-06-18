@@ -34,6 +34,7 @@ module pl_control (
     output logic       MemRead,
     output logic       MemWrite,
     output logic       Branch,
+    output logic [1:0] JalJalr,
     output logic [1:0] ALUOp
 );
 
@@ -42,8 +43,8 @@ module pl_control (
     localparam STORE  = 7'b0100011;
     localparam BRANCH = 7'b1100011;
     localparam I_TYPE = 7'b0010011;
-    localparam LUI    = 7'b0110111;
-    localparam AUIPC  = 7'b0010111;
+    localparam JAL =    7'b1101111;
+    localparam JALR =   7'b1100111;
     
     always_comb begin
         ALUSrc   = 1'b0;
@@ -53,6 +54,7 @@ module pl_control (
         MemWrite = 1'b0;
         Branch   = 1'b0;
         ALUOp    = 2'b00;
+        JalJalr  = 2'b00;
 
         case (Opcode)
             R_TYPE: begin
@@ -82,19 +84,16 @@ module pl_control (
                 RegWrite = 1'b1;
                 ALUOp = 2'b11;
             end
-
-            LUI: begin
-                ALUSrc   = 1'b1;
+            JAL: begin
+                ALUOp    = 2'b11;
+                JalJalr  = 2'b01;
                 RegWrite = 1'b1;
-                ALUOp    = 2'b00;
             end
-
-            AUIPC: begin
-                ALUSrc   = 1'b1;
+            JALR: begin
+                ALUOp    = 2'b11;
+                JalJalr = 2'b10;
                 RegWrite = 1'b1;
-                ALUOp    = 2'b00; // soma
             end
-
             default: ; // sinais permanecem em zero (seguro)
         endcase
     end
