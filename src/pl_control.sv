@@ -45,6 +45,8 @@ module pl_control (
     localparam I_TYPE = 7'b0010011;
     localparam JAL =    7'b1101111;
     localparam JALR =   7'b1100111;
+    localparam LUI    = 7'b0110111;
+    localparam AUIPC  = 7'b0010111;
     
     always_comb begin
         ALUSrc   = 1'b0;
@@ -93,6 +95,17 @@ module pl_control (
                 ALUOp    = 2'b11;
                 JalJalr = 2'b10;
                 RegWrite = 1'b1;
+            end
+            LUI: begin
+                ALUSrc   = 1'b1;
+                RegWrite = 1'b1;
+                ALUOp    = 2'b00;
+            end
+
+            AUIPC: begin
+                ALUSrc   = 1'b1;
+                RegWrite = 1'b1;
+                ALUOp    = 2'b00; // soma
             end
             default: ; // sinais permanecem em zero (seguro)
         endcase
