@@ -193,6 +193,7 @@ module pl_datapath (
             id_ex.mem_write  <= 1'b0;
             id_ex.alu_op     <= 2'b00;
             id_ex.branch     <= 1'b0;
+            id_ex.opcode     <= 7'b0;
             id_ex.pc         <= 32'b0;
             id_ex.rd1        <= 32'b0;
             id_ex.rd2        <= 32'b0;
@@ -211,6 +212,7 @@ module pl_datapath (
             id_ex.mem_write  <= 1'b0;
             id_ex.alu_op     <= 2'b00;
             id_ex.branch     <= 1'b0;
+            id_ex.opcode     <= 7'b0;
             id_ex.pc         <= 32'b0;
             id_ex.rd1        <= 32'b0;
             id_ex.rd2        <= 32'b0;
@@ -229,6 +231,7 @@ module pl_datapath (
             id_ex.mem_write  <= MemWrite;
             id_ex.alu_op     <= ALUOp;
             id_ex.branch     <= Branch;
+            id_ex.opcode     <= if_id.instr[6:0];
             id_ex.pc         <= if_id.pc;
             id_ex.jaljalr         <= JalJalr; //sinal de jalr e jalr pipelineado
             id_ex.rd1        <= rd1;
@@ -280,10 +283,20 @@ module pl_datapath (
     end
 
     // Mux ALUSrc: imediato ou registrador
-    assign alu_srcb = id_ex.alu_src ? id_ex.imm_ext : fwd_srcb;
+    logic is_lui;
+
+    logic [31:0] alu_srca;
+
+    assign is_lui = (id_ex.opcode == 7'b0110111);
+
+    assign alu_srca =
+        is_lui ? 32'b0 : fwd_srca;
+
+    assign alu_srcb =
+        id_ex.alu_src ? id_ex.imm_ext : fwd_srcb;
 
     pl_alu alu (
-        .SrcA      (fwd_srca),
+        .SrcA      (alu_srca),
         .SrcB      (alu_srcb),
         .Operation (ALU_CC),
         .ALUResult (alu_result),
