@@ -285,16 +285,18 @@ module pl_datapath (
     // Mux ALUSrc: imediato ou registrador
     logic is_lui;
 
+    logic is_auipc;
+
     logic [31:0] alu_srca;
 
     assign is_lui = (id_ex.opcode == 7'b0110111);
+    assign is_auipc = (id_ex.opcode == 7'b0010111);
 
     assign alu_srca =
-        is_lui ? 32'b0 : fwd_srca;
-
-    assign alu_srcb =
-        id_ex.alu_src ? id_ex.imm_ext : fwd_srcb;
-
+            is_lui   ? 32'b0 :
+            is_auipc ? id_ex.pc :
+               fwd_srca;
+               
     pl_alu alu (
         .SrcA      (alu_srca),
         .SrcB      (alu_srcb),

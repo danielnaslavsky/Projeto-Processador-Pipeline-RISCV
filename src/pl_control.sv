@@ -101,7 +101,6 @@ module pl_control (
                 RegWrite = 1'b1;
                 ALUOp    = 2'b00;
             end
-
             AUIPC: begin
                 ALUSrc   = 1'b1;
                 RegWrite = 1'b1;

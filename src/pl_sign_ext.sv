@@ -40,6 +40,8 @@ module pl_sign_ext (
 
             LUI: ImmExt = {Instr[31:12], 12'b0};
 
+            AUIPC:  ImmExt = {Instr[31:12], 12'b0};
+
             default:ImmExt = 32'b0;
         endcase
     end
