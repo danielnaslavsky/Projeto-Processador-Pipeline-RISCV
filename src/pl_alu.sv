@@ -32,21 +32,21 @@ module pl_alu (
             4'd07:   ALUResult = SrcA << SrcB[4:0]; //SLL IMPLEMENTADO
             4'd08:   ALUResult = SrcA >> SrcB[4:0]; // SRL IMPLEMENTADO
             4'd09:   ALUResult = $signed(SrcA) >>> SrcB[4:0]; //SRA IMPLEMENTADO
-            4'd10:   ALUResult = ($signed(SrcA) < $signed(SrcB)) ? 32'd1 : 32'd0;
+            4'd10:   ALUResult = ($signed(SrcA) < $signed(SrcB)) ? 32'd1 : 32'd0; //SLT 
             4'd11:   ALUResult = 32'(SrcA < SrcB); //SLTU IMPLEMENTADO
             default: ALUResult = 32'b0;
         endcase
     end
 
     always_comb begin
-        case (Funct3) begin                       // Zero é o sinal para ver se deve ou não o branch ser tomado
+        case (Funct3)                 // Zero é o sinal para ver se deve ou não o branch ser tomado
             3'h0: Zero = (ALUResult == 32'b0);
             3'h1: Zero = !(ALUResult == 32'b0); 
             3'h4: Zero = (ALUResult == 32'b1);
             3'h5: Zero = !(ALUResult == 32'b1);
             3'h6: Zero = (ALUResult == 32'b1);
             3'h7: Zero = !(ALUResult == 32'b1);
-            end
+            default: Zero = 1'b0;
         endcase
     end
     

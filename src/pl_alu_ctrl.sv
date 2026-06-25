@@ -20,23 +20,26 @@ module pl_alu_ctrl (
     input  logic [6:0] Funct7,
     input  logic [2:0] Funct3,
     output logic [3:0] Operation,
-    input logic [4:0] LoadControl
+    output logic [4:0] LoadControl
 );
 
     always_comb begin
+        Operation = 4'd01;
+        LoadControl = 5'b00100; //lw normal
         case (ALUOp)
-            2'b00: Operation = 4'd01;   // Load / Store -> ADD
+            2'b00: begin
+                Operation = 4'd01;   // Load / Store -> ADD
                 case(Funct3)
-                    3'h0: LoadControl = 00001;
-                    3'h1: LoadControl = 00010;
-                    3'h2: LoadControl = 00100;
-                    3'h3: LoadControl = 01000;
-                    3'h4: LoadControl = 10000;
+                    3'h0: LoadControl = 5'b00001; //LB
+                    3'h1: LoadControl = 5'b00010; //LH
+                    3'h2: LoadControl = 5'b00100; //LW
+                    3'h4: LoadControl = 5'b01000; //LBU
+                    3'h5: LoadControl = 5'b10000; //LHU
                     default: LoadControl = 00100; // Aleatório 
                 endcase
-
-
-            2'b01: Operation = 4'd02;   // Branch BEQ  -> SUB
+            end
+            2'b01: begin
+                Operation = 4'd02;   // Branch BEQ  -> SUB
                 case (Funct3)
                     3'h0: Operation = 4'd02;
                     3'h1: Operation = 4'd02;
@@ -46,6 +49,7 @@ module pl_alu_ctrl (
                     3'h5: Operation = 4'd11;
                     default: Operation = 4'd02;
                 endcase
+            end
             2'b10: begin                // R-type: decodificar Funct
                 case (Funct3)
                     3'h0: Operation = Funct7[5] ? 4'd02 : 4'd01; // SUB ou ADD
@@ -61,7 +65,7 @@ module pl_alu_ctrl (
 									 default : Operation = 4'd01;
                         endcase
                     end
-                    3'h3: Operation = 4'd10; //SLTU IMPLEMENTADO
+                    3'h3: Operation = 4'd11; //SLTU IMPLEMENTADO
                     
                     
 
@@ -86,8 +90,6 @@ module pl_alu_ctrl (
 						default: Operation = 4'd01;
                 endcase
             end
-
-            default: Operation = 4'd01;
         endcase
     end
 
