@@ -35,24 +35,22 @@ module pl_dmem (
     always@(posedge clk) begin
         if (MemWrite) begin   //STORE
             case (StoreControl)
-            000:  ram[addr] <= {{24{WriteData[7]}},WriteData[7:0]};  // SB
-            001: ram[addr] <= {{16{WriteData[15]}},WriteData[15:0]}; // SH
-            010: ram[addr] <= WriteData;                             // SW
-            default: ram[addr] <= WriteData;
+            3'b000:  ram[addr] <= {ram[addr][31:8],WriteData[7:0]};  // SB
+            3'b001: ram[addr] <= {ram[addr][31:16],WriteData[15:0]}; // SH
+            3'b010: ram[addr] <= WriteData;                             // SW
+            default: ram[addr] <= WriteData;    
             endcase
 
         end
     end
 
-    assign ReadData = ram[addr];
-
     always_comb begin 
         case(LoadControl)   //LOAD
-        00001: ReadData = {{24{ram[addr][7]}},ram[addr][7:0]};    // LB
-        00010: ReadData = {{16{ram[addr][15]}},ram[addr][15:0]};  // LH
-        00100: ReadData = ram[addr];                              // LW
-        01000: ReadData = {{24'b0},ram[addr][7:0]};               // LBU
-        10000:  ReadData = {{16'b0},ram[addr][15:0]};             // LHU
+        5'b00001: ReadData = {{24{ram[addr][7]}},ram[addr][7:0]};    // LB
+        5'b00010: ReadData = {{16{ram[addr][15]}},ram[addr][15:0]};  // LH
+        5'b00100: ReadData = ram[addr];                              // LW
+        5'b01000: ReadData = {{24'b0},ram[addr][7:0]};               // LBU
+        5'b10000:  ReadData = {{16'b0},ram[addr][15:0]};             // LHU
         default: ReadData = ram[addr];
     endcase
     end

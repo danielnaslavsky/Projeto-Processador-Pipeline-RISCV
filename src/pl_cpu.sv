@@ -53,7 +53,7 @@ module pl_cpu (
     logic [1:0] aluop_ex;
     logic [3:0] alu_cc;
     logic [4:0] LoadControl;
-    logic [1:0] JalJalr, 
+    logic [1:0] JalJalr;
 
     // -------------------------------------------------------------------------
     // Unidade de controle principal (estagio ID)
@@ -66,7 +66,8 @@ module pl_cpu (
         .MemRead  (MemRead),
         .MemWrite (MemWrite),
         .Branch   (Branch),
-        .ALUOp    (ALUOp)
+        .ALUOp    (ALUOp),
+        .JalJalr  (JalJalr)
     );
 
     // -------------------------------------------------------------------------
@@ -92,7 +93,7 @@ module pl_cpu (
         .MemRead      (MemRead),
         .MemWrite     (MemWrite),
         .Branch       (Branch),
-        .JalJalr      (JalJalr)
+        .JalJalr      (JalJalr),
         .ALUOp        (ALUOp),
         .ALU_CC       (alu_cc),
         .Opcode       (opcode),

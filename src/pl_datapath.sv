@@ -37,7 +37,7 @@ module pl_datapath (
     input  logic        Branch,
     input  logic [1:0]  JalJalr,          //sinal do jaljalr adicionado
     input  logic [1:0]  ALUOp,
-
+    input logic [4:0] LoadControl,     //ADICIONAMOS O CONTROLE DE LOAD
     // Codigo de operacao da ALU (pl_alu_ctrl, usa campos do estagio EX)
     input  logic [3:0]  ALU_CC,
 
@@ -99,7 +99,6 @@ module pl_datapath (
     // MEM
     logic        mmio_sel;
     logic [31:0] dmem_rd, mmio_rd, mem_read_data;
-    logic [4:0] LoadControl;
 
     // =========================================================================
     // IF -- Busca de instrucao
@@ -155,12 +154,15 @@ module pl_datapath (
         .id_ex_mem_read (id_ex.mem_read),
         .stall          (stall)
     );
-
-    assign wb_data = mem_wb.mem_to_reg ? mem_wb.read_data : mem_wb.alu_result;
+    always_comb begin
+        if (mem_wb.jaljalr == 2'b01 || mem_wb.jaljalr == 2'b10) wb_data = mem_wb.pc + 32'd4;
+        else if (mem_wb.mem_to_reg) wb_data = mem_wb.read_data;
+        else wb_data = mem_wb.alu_result;
+    end
 
     pl_regfile regfile (
         .clk       (clk),
-        .RegWrite  (mem_wb.reg_write),rd
+        .RegWrite  (mem_wb.reg_write),
         .rs1       (if_id.instr[19:15]),
         .rs2       (if_id.instr[24:20]),
         .rd        (mem_wb.rd),
@@ -201,6 +203,7 @@ module pl_datapath (
             id_ex.imm_ext    <= 32'b0;
             id_ex.funct3     <= 3'b0;
             id_ex.funct7     <= 7'b0;
+            id_ex.jaljalr   <=  2'b00; //Zeramos o sinal jaljalr
         end else if (stall || pc_src) begin    // NOP sincrono: load-use ou branch
             id_ex.alu_src    <= 1'b0;
             id_ex.mem_to_reg <= 1'b0;
@@ -219,6 +222,7 @@ module pl_datapath (
             id_ex.imm_ext    <= 32'b0;
             id_ex.funct3     <= 3'b0;
             id_ex.funct7     <= 7'b0;
+            id_ex.jaljalr   <=  2'b00; //Zeramos o sinal jaljalr
         end else begin
             id_ex.alu_src    <= ALUSrc;
             id_ex.mem_to_reg <= MemtoReg;
@@ -229,6 +233,7 @@ module pl_datapath (
             id_ex.branch     <= Branch;
             id_ex.opcode     <= if_id.instr[6:0];
             id_ex.pc         <= if_id.pc;
+            id_ex.jaljalr         <= JalJalr; //sinal de jalr e jalr pipelineado
             id_ex.rd1        <= rd1;
             id_ex.rd2        <= rd2;
             id_ex.rs1        <= if_id.instr[19:15];
@@ -297,20 +302,17 @@ module pl_datapath (
         .SrcB      (alu_srcb),
         .Operation (ALU_CC),
         .ALUResult (alu_result),
-        .Zero      (zero)
+        .Zero      (zero),
+        .Funct3    (id_ex.funct3)
     );
 
     always_comb begin
-        if (id_ex.jaljalr == 2'b01 || id_ex.branch) begin                              //
-            branch_target = id_ex.pc + id_ex.imm_ext;
-    end else if (id_ex.jaljalr == 2'b10) begin
-            branch_target =  fwd_srca + id_ex.imm_ext;
-    end  
+        branch_target = id_ex.pc + id_ex.imm_ext; //BRANCH E JAL
+        if (id_ex.jaljalr == 2'b10) branch_target =  fwd_srca + id_ex.imm_ext; //Se for JALR
     end
     
-    // Branch resolvido no estagio EX (flush 2 instrucoes se taken) ou jaljalr                 
-
-    assign pc_src        = (id_ex.branch && zero) || (jaljalr == 2'b01 || jaljalr == 2'b10);
+    // Branch resolvido no estagio EX (flush 2 instrucoes se taken) ou jaljalr 
+    assign pc_src        = (id_ex.branch && zero) || (id_ex.jaljalr == 2'b01 || id_ex.jaljalr == 2'b10);
 
     // =========================================================================
     // Registrador EX/MEM
@@ -325,15 +327,21 @@ module pl_datapath (
             ex_mem.write_data  <= 32'b0;
             ex_mem.rd          <= 5'b0;
             ex_mem.funct3      <= 3'b0;
+            ex_mem.jaljalr     <= 2'b00; //adicionado para o jal e jalr
+            ex_mem.pc          <= 32'b0; //mesma coisa
+            ex_mem.LoadControl <= 5'b0;
         end else begin
             ex_mem.mem_to_reg  <= id_ex.mem_to_reg;
             ex_mem.reg_write   <= id_ex.reg_write;
             ex_mem.mem_read    <= id_ex.mem_read;
             ex_mem.mem_write   <= id_ex.mem_write;
-            ex_mem.alu_result  <= alu_result;
+            ex_mem.pc          <= id_ex.pc; //mesma coisa
+            ex_mem.jaljalr     <= id_ex.jaljalr; //adicionado para o jal e jalr
+            ex_mem.alu_result  <= alu_result; 
             ex_mem.write_data  <= fwd_srcb;   // rs2 adiantado (para SW/MMIO)
             ex_mem.rd          <= id_ex.rd;
             ex_mem.funct3      <= id_ex.funct3;
+            ex_mem.LoadControl <= LoadControl;
         end
     end
 
@@ -348,8 +356,8 @@ module pl_datapath (
         .addr      (ex_mem.alu_result[9:2]),
         .WriteData (ex_mem.write_data),
         .ReadData  (dmem_rd),
-        .LoadControl (LoadControl),
-        .StoreControl (Funct3_EX) // para controlar o tipo de store
+        .LoadControl (ex_mem.LoadControl),
+        .StoreControl (ex_mem.funct3) // para controlar o tipo de store
     );
 
     pl_mmio mmio (
@@ -385,12 +393,16 @@ module pl_datapath (
             mem_wb.alu_result <= 32'b0;
             mem_wb.read_data  <= 32'b0;
             mem_wb.rd         <= 5'b0;
+            mem_wb.jaljalr <= 2'b00;
+            mem_wb.pc      <= 32'b0;
         end else begin
             mem_wb.mem_to_reg <= ex_mem.mem_to_reg;
             mem_wb.reg_write  <= ex_mem.reg_write;
             mem_wb.alu_result <= ex_mem.alu_result;
             mem_wb.read_data  <= mem_read_data;
+            mem_wb.pc          <= ex_mem.pc;
             mem_wb.rd         <= ex_mem.rd;
+            mem_wb.jaljalr <= ex_mem.jaljalr;
         end
     end
 
