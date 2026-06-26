@@ -35,7 +35,7 @@ module pl_alu_ctrl (
                     3'h2: LoadControl = 5'b00100; //LW
                     3'h4: LoadControl = 5'b01000; //LBU
                     3'h5: LoadControl = 5'b10000; //LHU
-                    default: LoadControl = 00100; // Aleatório 
+                    default: LoadControl = 5'b00100; // Aleatório 
                 endcase
             end
             2'b01: begin

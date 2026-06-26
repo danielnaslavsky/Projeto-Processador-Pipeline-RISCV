@@ -264,10 +264,14 @@ module pl_datapath (
         .forward_b        (fwd_b)
     );
 
+    // =========================================================================
+    // EX -- Muxes de Forwarding Corrigidos para suportar LOAD
+    // =========================================================================
     // Mux de forwarding para SrcA
     always_comb begin
         case (fwd_a)
-            2'b10:   fwd_srca = ex_mem.alu_result;
+            // Se a instrução em MEM for um LOAD (mem_to_reg == 1), adianta mem_read_data, senão adianta alu_result
+            2'b10:   fwd_srca = ex_mem.mem_to_reg ? mem_read_data : ex_mem.alu_result;
             2'b01:   fwd_srca = wb_data;
             default: fwd_srca = id_ex.rd1;
         endcase
@@ -276,7 +280,8 @@ module pl_datapath (
     // Mux de forwarding para SrcB (antes do mux ALUSrc)
     always_comb begin
         case (fwd_b)
-            2'b10:   fwd_srcb = ex_mem.alu_result;
+            // Se a instrução em MEM for um LOAD, adianta mem_read_data, senão adianta alu_result
+            2'b10:   fwd_srcb = ex_mem.mem_to_reg ? mem_read_data : ex_mem.alu_result;
             2'b01:   fwd_srcb = wb_data;
             default: fwd_srcb = id_ex.rd2;
         endcase
@@ -310,7 +315,7 @@ module pl_datapath (
 
     always_comb begin
         branch_target = id_ex.pc + id_ex.imm_ext; //BRANCH E JAL
-        if (id_ex.jaljalr == 2'b10) branch_target =  (fwd_srca + id_ex.imm_ext) ~32'b1; //Se for JALR
+        if (id_ex.jaljalr == 2'b10) branch_target =  (fwd_srca + id_ex.imm_ext) & ~32'b1; //Se for JALR
     end
     
     // Branch resolvido no estagio EX (flush 2 instrucoes se taken) ou jaljalr 
@@ -339,7 +344,11 @@ module pl_datapath (
             ex_mem.mem_write   <= id_ex.mem_write;
             ex_mem.pc          <= id_ex.pc; //mesma coisa
             ex_mem.jaljalr     <= id_ex.jaljalr; //adicionado para o jal e jalr
-            ex_mem.alu_result  <= alu_result; 
+            // Salva PC+4 no resultado da ALU se for JAL/JALR para permitir adiantamento correto
+            if (id_ex.jaljalr == 2'b01 || id_ex.jaljalr == 2'b10)
+                ex_mem.alu_result <= id_ex.pc + 32'd4;
+            else
+                ex_mem.alu_result <= alu_result;
             ex_mem.write_data  <= fwd_srcb;   // rs2 adiantado (para SW/MMIO)
             ex_mem.rd          <= id_ex.rd;
             ex_mem.funct3      <= id_ex.funct3;
