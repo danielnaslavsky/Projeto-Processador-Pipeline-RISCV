@@ -313,8 +313,20 @@ module pl_datapath (
     // =========================================================================
     // MEM -- Memoria de dados + MMIO
     // =========================================================================
-    assign mmio_sel = ex_mem.alu_result[10];
+    assign mmio_sel = ex_mem.alu_result[10]; [cite: 132]
 
+    // Controle do sinal LoadControl (caso sua pl_dmem utilize internamente)
+    always_comb begin
+        case (ex_mem.funct3)
+            3'b000:  LoadControl = 5'b00001; // LB
+            3'b001:  LoadControl = 5'b00010; // LH
+            3'b010:  LoadControl = 5'b00100; // LW
+            3'b100:  LoadControl = 5'b10000; // LBU
+            3'b101:  LoadControl = 5'b01000; // LHU
+            default: LoadControl = 5'b00100;
+        endcase
+    end
+    
     pl_dmem dmem (
         .clk       (clk),
         .MemWrite  (ex_mem.mem_write & ~mmio_sel),
@@ -340,12 +352,52 @@ module pl_datapath (
         .UART_RXD  (UART_RXD)
     );
 
-    assign mem_read_data = mmio_sel ? mmio_rd : dmem_rd;
+    // Dado bruto de 32 bits vindo da memória ou perifericos
+    logic [31:0] raw_mem_data;
+    assign raw_mem_data = mmio_sel ? mmio_rd : dmem_rd;
 
-    // Saidas de observabilidade para o testbench
-    assign mem_wr_en   = ex_mem.mem_write & ~mmio_sel;
-    assign mem_wr_addr = ex_mem.alu_result[9:2];
-    assign mem_wr_data = ex_mem.write_data;
+    // Bloco Combinacional para mascarar e estender o dado (LB, LH, LBU, LHU, LW)
+    always_comb begin
+        case (ex_mem.funct3)
+            3'b000: begin // LB: Load Byte (Sinal Estendido)
+                case (ex_mem.alu_result[1:0])
+                    2'b00: mem_read_data = {{24{raw_mem_data[7]}},  raw_mem_data[7:0]};
+                    2'b01: mem_read_data = {{24{raw_mem_data[15]}}, raw_mem_data[15:8]};
+                    2'b10: mem_read_data = {{24{raw_mem_data[23]}}, raw_mem_data[23:16]};
+                    2'b11: mem_read_data = {{24{raw_mem_data[31]}}, raw_mem_data[31:24]};
+                endcase
+            end
+
+            3'b001: begin // LH: Load Halfword (Sinal Estendido)
+                case (ex_mem.alu_result[1])
+                    1'b0:    mem_read_data = {{16{raw_mem_data[15]}}, raw_mem_data[15:0]};
+                    1'b1:    mem_read_data = {{16{raw_mem_data[31]}}, raw_mem_data[31:16]};
+                endcase
+            end
+
+            3'b010: begin // LW: Load Word (Retorna os 32 bits completos)
+                mem_read_data = raw_mem_data;
+            end
+
+            3'b100: begin // LBU: Load Byte Unsigned (Extensão de Zero)
+                case (ex_mem.alu_result[1:0])
+                    2'b00: mem_read_data = {24'b0, raw_mem_data[7:0]};
+                    2'b01: mem_read_data = {24'b0, raw_mem_data[15:8]};
+                    2'b10: mem_read_data = {24'b0, raw_mem_data[23:16]};
+                    2'b11: mem_read_data = {24'b0, raw_mem_data[31:24]};
+                endcase
+            end
+
+            3'b101: begin // LHU: Load Halfword Unsigned (Extensão de Zero)
+                case (ex_mem.alu_result[1])
+                    1'b0:    mem_read_data = {16'b0, raw_mem_data[15:0]};
+                    1'b1:    mem_read_data = {16'b0, raw_mem_data[31:16]};
+                endcase
+            end
+
+            default: mem_read_data = raw_mem_data;
+        endcase
+    end
 
     // =========================================================================
     // Registrador MEM/WB
