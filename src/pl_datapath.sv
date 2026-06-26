@@ -282,6 +282,8 @@ module pl_datapath (
         endcase
     end
 
+    assign alu_srcb = id_ex.alu_src ? id_ex.imm_ext : fwd_srcb;
+    
     // Mux ALUSrc: imediato ou registrador
     logic is_lui;
 
@@ -308,7 +310,7 @@ module pl_datapath (
 
     always_comb begin
         branch_target = id_ex.pc + id_ex.imm_ext; //BRANCH E JAL
-        if (id_ex.jaljalr == 2'b10) branch_target =  fwd_srca + id_ex.imm_ext; //Se for JALR
+        if (id_ex.jaljalr == 2'b10) branch_target =  (fwd_srca + id_ex.imm_ext) ~32'b1; //Se for JALR
     end
     
     // Branch resolvido no estagio EX (flush 2 instrucoes se taken) ou jaljalr 

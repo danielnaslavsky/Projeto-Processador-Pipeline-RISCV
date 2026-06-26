@@ -23,7 +23,8 @@ module pl_sign_ext (
     localparam JAL =    7'b1101111;
     localparam JALR =   7'b1100111;
     localparam LUI = 7'b0110111;
-
+    localparam AUIPC  = 7'b0010111;
+    
     always_comb begin
         case (Instr[6:0])
             LOAD:   ImmExt = {{20{Instr[31]}}, Instr[31:20]};

@@ -39,13 +39,13 @@ module pl_alu (
     end
 
     always_comb begin
-        case (Funct3)                 // Zero é o sinal para ver se deve ou não o branch ser tomado
-            3'h0: Zero = (ALUResult == 32'b0);
-            3'h1: Zero = !(ALUResult == 32'b0); 
-            3'h4: Zero = (ALUResult == 32'b1);
-            3'h5: Zero = !(ALUResult == 32'b1);
-            3'h6: Zero = (ALUResult == 32'b1);
-            3'h7: Zero = !(ALUResult == 32'b1);
+        case (Funct3)                 //Zero é o sinal para ver se deve ou não o branch ser tomado
+            3'h0: Zero = (ALUResult == 32'b0); //BEQ
+            3'h1: Zero = !(ALUResult == 32'b0); //BNE IMPLEMENTADO
+            3'h4: Zero = (ALUResult == 32'b1); //BLT IMPLEMENTADO
+            3'h5: Zero = !(ALUResult == 32'b1); //BGE IMPLEMENTADO
+            3'h6: Zero = (ALUResult == 32'b1);  //BLTU IMPLEMENTADO
+            3'h7: Zero = !(ALUResult == 32'b1); //BGEU IMPLEMENTADO
             default: Zero = 1'b0;
         endcase
     end

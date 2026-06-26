@@ -41,12 +41,12 @@ module pl_alu_ctrl (
             2'b01: begin
                 Operation = 4'd02;   // Branch BEQ  -> SUB
                 case (Funct3)
-                    3'h0: Operation = 4'd02;
-                    3'h1: Operation = 4'd02;
-                    3'h2: Operation = 4'd10;
-                    3'h3: Operation = 4'd10;
-                    3'h4: Operation = 4'd11;
-                    3'h5: Operation = 4'd11;
+                    3'h0: Operation = 4'd02; //BEQ
+                    3'h1: Operation = 4'd02; //BNE
+                    3'h4: Operation = 4'd10; //BLT
+                    3'h5: Operation = 4'd10; //BGE
+                    3'h6: Operation = 4'd11; //BLTU
+                    3'h7: Operation = 4'd11; //BGEU
                     default: Operation = 4'd02;
                 endcase
             end
