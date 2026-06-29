@@ -52,8 +52,10 @@ module pl_cpu (
     logic [6:0] funct7_ex;
     logic [1:0] aluop_ex;
     logic [3:0] alu_cc;
-    logic [4:0] LoadControl;
-    logic [1:0] JalJalr;
+    logic Jump;
+    logic Jalr;
+    logic ctrl_lui;
+    logic ctrl_auipc;
 
     // -------------------------------------------------------------------------
     // Unidade de controle principal (estagio ID)
@@ -67,7 +69,10 @@ module pl_cpu (
         .MemWrite (MemWrite),
         .Branch   (Branch),
         .ALUOp    (ALUOp),
-        .JalJalr  (JalJalr)
+        .Jump (Jump),
+        .Jalr (Jalr),
+        .Lui (ctrl_lui),
+        .Auipc (ctrl_auipc)
     );
 
     // -------------------------------------------------------------------------
@@ -77,8 +82,7 @@ module pl_cpu (
         .ALUOp     (aluop_ex),
         .Funct7    (funct7_ex),
         .Funct3    (funct3_ex),
-        .Operation (alu_cc),
-        .LoadControl (LoadControl)
+        .Operation (alu_cc)
     );
 
     // -------------------------------------------------------------------------
@@ -93,7 +97,6 @@ module pl_cpu (
         .MemRead      (MemRead),
         .MemWrite     (MemWrite),
         .Branch       (Branch),
-        .JalJalr      (JalJalr),
         .ALUOp        (ALUOp),
         .ALU_CC       (alu_cc),
         .Opcode       (opcode),
@@ -113,7 +116,11 @@ module pl_cpu (
         .mem_wr_en    (mem_wr_en),
         .mem_wr_addr  (mem_wr_addr),
         .mem_wr_data  (mem_wr_data),
-        .LoadControl (LoadControl)
+        .Jump (Jump), //CRIADO RECEBE DO CONTROL
+        .Jalr (Jalr), //CRIADO  RECEBE DO CONTROL
+        .Lui (ctrl_lui),// CRIADO RECEBE DO CONTROL
+        .Auipc (ctrl_auipc) //CRIADO //RECEBE DO CONTROL
+
     );
 
 endmodule

@@ -34,8 +34,11 @@ module pl_control (
     output logic       MemRead,
     output logic       MemWrite,
     output logic       Branch,
-    output logic [1:0] JalJalr,
-    output logic [1:0] ALUOp
+    output logic [1:0] ALUOp,
+    output logic       Jump,
+    output logic       Jalr,
+    output logic       Lui,
+    output logic       Auipc
 );
 
     localparam R_TYPE = 7'b0110011;
@@ -43,11 +46,12 @@ module pl_control (
     localparam STORE  = 7'b0100011;
     localparam BRANCH = 7'b1100011;
     localparam I_TYPE = 7'b0010011;
-    localparam JAL =    7'b1101111;
-    localparam JALR =   7'b1100111;
-    localparam LUI    = 7'b0110111;
-    localparam AUIPC  = 7'b0010111;
-    
+    localparam JAL  = 7'b1101111;
+    localparam JALR = 7'b1100111;
+    localparam LUI   = 7'b0110111;
+    localparam AUIPC = 7'b0010111;
+
+
     always_comb begin
         ALUSrc   = 1'b0;
         MemtoReg = 1'b0;
@@ -56,7 +60,10 @@ module pl_control (
         MemWrite = 1'b0;
         Branch   = 1'b0;
         ALUOp    = 2'b00;
-        JalJalr  = 2'b00;
+        Jump     = 1'b0;
+        Jalr     = 1'b0;
+        Lui   = 1'b0;
+        Auipc = 1'b0;
 
         case (Opcode)
             R_TYPE: begin
@@ -86,27 +93,45 @@ module pl_control (
                 RegWrite = 1'b1;
                 ALUOp = 2'b11;
             end
+
             JAL: begin
-                ALUOp    = 2'b11;
-                JalJalr  = 2'b01;
-                RegWrite = 1'b1;
+                RegWrite = 1'b1; //salvar PC+4 no rd
+                Jump     = 1'b1;
+                Jalr     = 1'b0;
             end
+            
             JALR: begin
-                ALUOp    = 2'b11;
-                JalJalr = 2'b10;
-                RegWrite = 1'b1;
+                ALUSrc   = 1'b1;
+                RegWrite = 1'b1; //salvar PC+4 no rd
+                Jump     = 1'b1;
+                Jalr     = 1'b1;
             end
+
             LUI: begin
                 ALUSrc   = 1'b1;
-                RegWrite = 1'b1;
+                MemtoReg = 1'b0;
+                RegWrite = 1'b1; 
+                MemRead  = 1'b0;
+                MemWrite = 1'b0;
+                Branch   = 1'b0;
+                Jump     = 1'b0;
+                Jalr     = 1'b0;
                 ALUOp    = 2'b00;
+                Lui      = 1'b1; 
             end
             AUIPC: begin
-                ALUSrc   = 1'b1;
+                ALUSrc   = 1'b1; 
+                MemtoReg = 1'b0; 
                 RegWrite = 1'b1;
-                ALUOp    = 2'b00; // soma
+                MemRead  = 1'b0;
+                MemWrite = 1'b0;
+                Branch   = 1'b0;
+                Jump     = 1'b0;
+                Jalr     = 1'b0;
+                ALUOp    = 2'b00;
+                Auipc    = 1'b1;
             end
-            default: ; // sinais permanecem em zero (seguro)
+            default: ; // sinais permanecem em zero (seguro )
         endcase
     end
 
