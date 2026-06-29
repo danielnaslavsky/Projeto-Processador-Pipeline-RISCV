@@ -102,8 +102,8 @@ module pl_datapath (
     // MEM
     logic        mmio_sel;
     logic [31:0] dmem_rd, mmio_rd, mem_read_data;
-    logic [31:0] mem_read_data_formatted; //Dado extraído e estendido
-    logic [31:0] mem_write_data_formatted; //Dado modificado para STORE
+    logic [31:0] mem_read_data_formatted; // Dado extraído e estendido para LOAD
+    logic [31:0] mem_write_data_formatted; // Dado modificado para STORE
 
     // =========================================================================
     // IF -- Busca de instrucao
@@ -413,7 +413,7 @@ module pl_datapath (
         if (ex_mem.mem_read) begin
             case (ex_mem.funct3)
                 3'h0: begin //lb Extensão de Sinal
-                    case (ex_mem.alu_result[1:0])
+                    case (ex_mem.alu_result[1:0]) //bit 1:0 define qual byte
                         2'b00: mem_read_data_formatted = {{24{mem_read_data[7]}},  mem_read_data[7:0]};
                         2'b01: mem_read_data_formatted = {{24{mem_read_data[15]}}, mem_read_data[15:8]};
                         2'b10: mem_read_data_formatted = {{24{mem_read_data[23]}}, mem_read_data[23:16]};
@@ -452,6 +452,7 @@ module pl_datapath (
 
 
     //Lógica de formatação de STORE (sb, sh, sw)
+    //Precisa passar os 32 bits (Read-Modify-Write), preservando o dado que já tinha e modificando a quantidade ncessária
     always_comb begin
         //Padrão: escreve a palavra inteira (sw)
         mem_write_data_formatted = ex_mem.write_data;
@@ -459,7 +460,7 @@ module pl_datapath (
         if (ex_mem.mem_write) begin
             case (ex_mem.funct3)
                 3'h0: begin //SB
-                    case (ex_mem.alu_result[1:0])
+                    case (ex_mem.alu_result[1:0]) //bit 1:0 define qual byte
                         2'b00: mem_write_data_formatted = {mem_read_data[31:8], ex_mem.write_data[7:0]};
                         2'b01: mem_write_data_formatted = {mem_read_data[31:16], ex_mem.write_data[7:0], mem_read_data[7:0]};
                         2'b10: mem_write_data_formatted = {mem_read_data[31:24], ex_mem.write_data[7:0], mem_read_data[15:0]};
@@ -467,7 +468,7 @@ module pl_datapath (
                     endcase
                 end
                 3'h1: begin //SH
-                    case (ex_mem.alu_result[1])
+                    case (ex_mem.alu_result[1]) //bit 1 define qual metade
                         1'b0: mem_write_data_formatted = {mem_read_data[31:16], ex_mem.write_data[15:0]};
                         1'b1: mem_write_data_formatted = {ex_mem.write_data[15:0], mem_read_data[15:0]};
                     endcase
